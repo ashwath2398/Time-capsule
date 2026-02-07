@@ -95,3 +95,10 @@ resource "aws_iam_role_policy_attachment" "time_capsule_role_attachment" {
   role       = aws_iam_role.time_capsule_role.name
   policy_arn = aws_iam_policy.time_capsule_policy.arn
 }
+
+#archive the backend.py file in a zip format 
+data "archive_file" "backend_zip" {
+  type        = "zip"
+  source_file = "backend.py"
+  output_path = "backend.zip"
+}
