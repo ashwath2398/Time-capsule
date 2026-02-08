@@ -153,3 +153,37 @@ resource "aws_lambda_permission" "api_gateway_permission" {
 output "api_endpoint" {
   value = "${aws_apigatewayv2_api.HTTP_api.api_endpoint}/save_message"
 }
+
+#ses email identity for sending email from the lambda function
+resource "aws_ses_email_identity" "email_identity" {
+  email = "ashwathc23@gmail.com"
+}
+
+#zip new python file 
+data "archive_file" "email_zip" {
+  type        = "zip"
+  source_file = "send_email.py"
+  output_path = "send_email.zip"
+}
+
+#creating lambda function for sending email
+resource "aws_lambda_function" "email_lambda" {
+  function_name = "send_email_function"
+  role          = aws_iam_role.time_capsule_role.arn
+  handler       = "send_email.lambda_handler"
+  runtime       = "python3.12"
+  filename      = data.archive_file.email_zip.output_path
+  source_code_hash = data.archive_file.email_zip.output_base64sha256
+}
+
+#trigger for the email lambda function when an item is deleted from the dynamodb table
+resource "aws_lambda_event_source_mapping" "dynamodb_trigger" {
+  event_source_arn = aws_dynamodb_table.time_capsule.stream_arn
+  function_name    = aws_lambda_function.email_lambda.arn
+  starting_position = "LATEST"
+  filter_criteria {
+    filter {
+      pattern = jsonencode({eventName = ["REMOVE"]})
+    }
+  }
+}
