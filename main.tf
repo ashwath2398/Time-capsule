@@ -1,12 +1,3 @@
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-  }
-}
-
 provider "aws" {
   region = "ap-south-1"
 }
@@ -101,4 +92,57 @@ data "archive_file" "backend_zip" {
   type        = "zip"
   source_file = "backend.py"
   output_path = "backend.zip"
+}
+
+#lambda function to process the data and send email
+resource "aws_lambda_function" "time_capsule_lambda" {
+  function_name = "save_message"
+  role          = aws_iam_role.time_capsule_role.arn
+  handler       = "backend.lambda_handler"
+  runtime       = "python3.12"
+  filename      = data.archive_file.backend_zip.output_path
+  source_code_hash = data.archive_file.backend_zip.output_base64sha256
+}
+
+
+#HTTP api gateway
+resource "aws_apigatewayv2_api" "HTTP_api" {
+  name          = "time-capsule-api"
+  protocol_type = "HTTP"
+}
+
+#stage for the api gateway
+#if i change code , update live url automatically
+resource "aws_apigatewayv2_stage" "api_stage" {
+  api_id      = aws_apigatewayv2_api.HTTP_api.id
+  name        = "$default"
+  auto_deploy = true
+}
+
+#integration of api gateway with lambda function
+resource "aws_apigatewayv2_integration" "lambda_integration" {
+  api_id           = aws_apigatewayv2_api.HTTP_api.id
+  integration_type = "AWS_PROXY"
+  integration_uri  = aws_lambda_function.time_capsule_lambda.invoke_arn
+  payload_format_version = "2.0" #modern lambda handling format
+}
+
+#route for the api gateway
+resource "aws_apigatewayv2_route" "api_route" {
+  api_id    = aws_apigatewayv2_api.HTTP_api.id
+  route_key = "POST /save_message"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
+}
+
+#permission for api gateway to invoke lambda function
+resource "aws_lambda_permission" "api_gateway_permission" {
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.time_capsule_lambda.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.HTTP_api.execution_arn}/*/*"
+}
+
+output "api_endpoint" {
+  value = "${aws_apigatewayv2_api.HTTP_api.api_endpoint}/save_message"
 }
