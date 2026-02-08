@@ -31,7 +31,7 @@ resource "aws_iam_role" "time_capsule_role" {
       {
         Effect = "Allow"
         Principal = {
-          Service = "dynamodb.amazonaws.com"
+          Service = "lambda.amazonaws.com"
         }
         Action = "sts:AssumeRole"
       }
@@ -41,7 +41,7 @@ resource "aws_iam_role" "time_capsule_role" {
 
 #iam policy to define the permissions (custom)
 resource "aws_iam_policy" "time_capsule_policy" {
-  name        = "time-capsule-policy"
+  name = "time-capsule-policy"
   
 
   policy = jsonencode({
@@ -54,7 +54,7 @@ resource "aws_iam_policy" "time_capsule_policy" {
           "dynamodb:GetItem",
 
         ]
-        Resource = "aws_dynamodb_table.time_capsule.arn"
+        Resource = aws_dynamodb_table.time_capsule.arn
       },
       {
         #allow effect to stream
@@ -64,6 +64,7 @@ resource "aws_iam_policy" "time_capsule_policy" {
           "dynamodb:GetRecords",
           "dynamodb:GetShardIterator",
         ]
+        Resource = aws_dynamodb_table.time_capsule.stream_arn
       },
       #global powers to log and send email
       {
@@ -96,7 +97,7 @@ data "archive_file" "backend_zip" {
 
 #lambda function to process the data and send email
 resource "aws_lambda_function" "time_capsule_lambda" {
-  function_name = "save_message"
+  function_name = "save_message_v2"
   role          = aws_iam_role.time_capsule_role.arn
   handler       = "backend.lambda_handler"
   runtime       = "python3.12"
@@ -109,7 +110,13 @@ resource "aws_lambda_function" "time_capsule_lambda" {
 resource "aws_apigatewayv2_api" "HTTP_api" {
   name          = "time-capsule-api"
   protocol_type = "HTTP"
-}
+ /* # adding CORS configuration to allow cross-origin requests from the frontend
+  cors_configuration {
+    allow_origins = ["*"] #allow all origins, can be restricted to specific domains in production
+    allow_methods = ["POST", "OPTIONS"] #allow only POST and OPTIONS methods
+    allow_headers = ["Content-Type"] #allow only Content-Type header
+  }*/
+} 
 
 #stage for the api gateway
 #if i change code , update live url automatically
