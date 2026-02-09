@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Time Capsule </title>
+</head>
+<body>
+
+    <h1>Time Capsule Project</h1>
+    <p>Architecture: Terraform -> API Gateway -> Lambda -> DynamoDB -> SES</p>
+    <hr>
+
+    <h3>Write your message:</h3>
+    <textarea id="userMessage" rows="5" cols="40" placeholder="Type here..."></textarea>
+    <br><br>
+
+    <h3>Time to wait (seconds):</h3>
+    <input type="number" id="userSeconds" value="60">
+    <br><br>
+
+    <button onclick="submitData()">Save to Database</button>
+
+    <p id="statusText" style="font-weight: bold;"></p>
+
+
+    <script>
+        function submitData() {
+            // Setup
+            var msg = document.getElementById("userMessage").value;
+            var sec = document.getElementById("userSeconds").value;
+            var status = document.getElementById("statusText");
+
+            
+            var apiUrl = "";  // paste URL here 
+
+            // Visual feedback
+            status.innerText = "Sending to AWS...";
+            status.style.color = "blue";
+
+            // Send data
+            fetch(apiUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: msg, seconds: parseInt(sec) })
+            })
+            .then(function(response) {
+                if (response.ok) {
+                    status.innerText = " Success! Item saved to DynamoDB.";
+                    status.style.color = "green";
+                } else {
+                    status.innerText = " Error: " + response.status;
+                    status.style.color = "red";
+                }
+            })
+            .catch(function(error) {
+                status.innerText = " Network Error (Check Console)";
+                status.style.color = "red";
+                console.error(error);
+            });
+        }
+    </script>
+
+</body>
+</html>
