@@ -110,12 +110,12 @@ resource "aws_lambda_function" "time_capsule_lambda" {
 resource "aws_apigatewayv2_api" "HTTP_api" {
   name          = "time-capsule-api"
   protocol_type = "HTTP"
- /* # adding CORS configuration to allow cross-origin requests from the frontend
+  # adding CORS configuration to allow cross-origin requests from the frontend
   cors_configuration {
     allow_origins = ["*"] #allow all origins, can be restricted to specific domains in production
     allow_methods = ["POST", "OPTIONS"] #allow only POST and OPTIONS methods
     allow_headers = ["Content-Type"] #allow only Content-Type header
-  }*/
+  }
 } 
 
 #stage for the api gateway
