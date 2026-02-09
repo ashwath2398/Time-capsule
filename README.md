@@ -23,6 +23,6 @@ graph TD
     Stream -->|Trigger REMOVE Event| Lambda2[Lambda: Send Email]
     Lambda2 -->|Send Mail| SES[Amazon SES]
     SES -->|Email| User
-
+```
 
     Built by - Ashwath
