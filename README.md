@@ -16,11 +16,11 @@ This project uses an **Event-Driven Architecture** built entirely on AWS Free Ti
 
 ```mermaid
 graph TD
-    User[User (HTML UI)] -->|POST /save_message| APIG[API Gateway]
+    User["User (HTML UI)"] -->|POST /save_message| APIG[API Gateway]
     APIG -->|Trigger| Lambda1[Lambda: Save Message]
-    Lambda1 -->|Put Item (with TTL)| DDB[(DynamoDB Table)]
-    DDB -->|TTL Expiry (Delete)| Stream{DynamoDB Stream}
-    Stream -->|Trigger (REMOVE Event)| Lambda2[Lambda: Send Email]
+    Lambda1 -->|Put Item with TTL| DDB[(DynamoDB Table)]
+    DDB -->|TTL Expiry Delete| Stream{DynamoDB Stream}
+    Stream -->|Trigger REMOVE Event| Lambda2[Lambda: Send Email]
     Lambda2 -->|Send Mail| SES[Amazon SES]
     SES -->|Email| User
 
