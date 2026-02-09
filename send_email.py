@@ -20,9 +20,9 @@ def lambda_handler(event, context):
             # Send the Email 📧
             try:
                 ses.send_email(
-                    Source="ashwathc23@gmail.com", # <--- UPDATE THIS
+                    Source="", # <--- UPDATE THIS
                     Destination={
-                        'ToAddresses': ["ashwathc23@gmail.com"] # <--- UPDATE THIS
+                        'ToAddresses': [""] # <--- UPDATE THIS
                     },
                     Message={
                         'Subject': {'Data': "Time Capsule: A Message from the Past! ⏳"},
